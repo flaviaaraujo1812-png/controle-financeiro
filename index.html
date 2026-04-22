@@ -1,38 +1,59 @@
 <!DOCTYPE html><html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Controle Financeiro Familiar</title>
-  <style>
-    body { font-family: Arial; padding: 20px; background: #f5f5f5; }
-    h1 { text-align: center; }
-    input, select, button {
-      padding: 10px;
-      margin: 5px;
-      width: 100%;
-      max-width: 300px;
-    }
-    .card {
-      background: white;
-      padding: 15px;
-      margin-top: 10px;
-      border-radius: 8px;
-    }
-  </style>
-</head>
-<body><h1>💰 Controle Financeiro Familiar</h1><div class="card">
-  <input id="categoria" placeholder="Categoria (Mercado, Luz...)" />
+<meta charset="UTF-8">
+<title>Controle Familiar</title><style>
+body { font-family: Arial; background:#f5f5f5; padding:20px; }
+h1 { text-align:center; }
+
+.card {
+  background:#fff;
+  padding:15px;
+  margin-top:10px;
+  border-radius:10px;
+}
+
+input, select, button {
+  padding:10px;
+  margin:5px;
+  width:100%;
+  max-width:300px;
+}
+
+.flex {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.total {
+  font-size:18px;
+  font-weight:bold;
+}
+
+</style></head><body><h1>💰 Controle Financeiro Familiar</h1><div class="card">
+  <input id="categoria" placeholder="Categoria (Mercado, Lazer...)" />
   <input id="valor" type="number" placeholder="Valor" />
   <input id="data" type="date" />  <select id="tipo">
     <option value="Fixa">Fixa</option>
     <option value="Variável">Variável</option>
   </select><button onclick="salvar()">Salvar</button>
 
-</div><h2>Total: R$ <span id="total">0</span></h2><div id="lista"></div><script>
+</div><div class="card">
+  <h2>📊 Totais por Categoria</h2>
+  <div id="categorias"></div>  <h3>Total do mês: R$ <span id="totalMes">0</span></h3>
+</div><div class="card">
+  <h2>📅 Relatório por mês</h2>
+  <input type="month" id="mesFiltro" onchange="filtrarMes()" />
+</div><div class="card">
+  <h2>🧾 Lançamentos</h2>
+  <div id="lista"></div>
+</div><script>
+
 let despesas = [];
 
 function salvar() {
   const categoria = document.getElementById("categoria").value;
-  const valor = document.getElementById("valor").value;
+  const valor = Number(document.getElementById("valor").value);
   const data = document.getElementById("data").value;
   const tipo = document.getElementById("tipo").value;
 
@@ -41,29 +62,66 @@ function salvar() {
     return;
   }
 
-  despesas.push({ categoria, valor: Number(valor), data, tipo });
+  despesas.push({ categoria, valor, data, tipo });
 
   atualizar();
 }
 
 function atualizar() {
+  mostrarLista(despesas);
+  calcularTotais(despesas);
+}
+
+function mostrarLista(listaDados) {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  let total = 0;
-
-  despesas.forEach(d => {
-    total += d.valor;
-
+  listaDados.forEach(d => {
     lista.innerHTML += `
       <div class="card">
-        ${d.categoria} - R$ ${d.valor} <br>
-        ${d.data} | ${d.tipo}
+        <b>${d.categoria}</b> - R$ ${d.valor}<br>
+        ${d.data || ""} | ${d.tipo}
       </div>
     `;
   });
-
-  document.getElementById("total").innerText = total;
 }
+
+function calcularTotais(listaDados) {
+  let total = 0;
+  let categorias = {};
+
+  listaDados.forEach(d => {
+    total += d.valor;
+
+    if (!categorias[d.categoria]) {
+      categorias[d.categoria] = 0;
+    }
+
+    categorias[d.categoria] += d.valor;
+  });
+
+  document.getElementById("totalMes").innerText = total.toFixed(2);
+
+  const divCat = document.getElementById("categorias");
+  divCat.innerHTML = "";
+
+  for (let cat in categorias) {
+    divCat.innerHTML += `
+      <div>${cat}: R$ ${categorias[cat].toFixed(2)}</div>
+    `;
+  }
+}
+
+function filtrarMes() {
+  const mes = document.getElementById("mesFiltro").value;
+
+  if (!mes) return;
+
+  const filtrado = despesas.filter(d => d.data && d.data.startsWith(mes));
+
+  mostrarLista(filtrado);
+  calcularTotais(filtrado);
+}
+
 </script></body>
 </html>
