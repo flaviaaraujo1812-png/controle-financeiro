@@ -2,16 +2,19 @@
 <head>
 <meta charset="UTF-8">
 <title>Controle Familiar</title><style>
-body { font-family: Arial; background:#f5f5f5; padding:20px; }
-h1 { text-align:center; }
+body { font-family: Arial; background:#eef2f7; padding:20px; }
+h1 { text-align:center; color:#1e3a8a; }
 
+/* cards */
 .card {
   background:#fff;
   padding:15px;
   margin-top:10px;
   border-radius:10px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
+/* inputs */
 input, select, button {
   padding:10px;
   margin:5px;
@@ -19,23 +22,42 @@ input, select, button {
   max-width:300px;
 }
 
+/* botão */
+button {
+  background:#1e3a8a;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+}
+button:hover {
+  background:#162d6b;
+}
+
+/* layout lado a lado */
 .flex {
   display:flex;
   gap:20px;
   flex-wrap:wrap;
 }
 
-.total {
-  font-size:18px;
-  font-weight:bold;
+/* lançamentos em 3 colunas */
+.grid {
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:10px;
 }
 
-/* lista em linha */
-.linha {
-  display:flex;
-  justify-content:space-between;
-  border-bottom:1px solid #ddd;
-  padding:8px 0;
+/* item lançamento */
+.item {
+  background:#f1f5ff;
+  padding:10px;
+  border-radius:8px;
+  border-left:5px solid #1e3a8a;
+}
+
+.total {
+  font-weight:bold;
+  margin-top:10px;
 }
 </style></head><body><h1>💰 Controle Financeiro Familiar</h1><div class="card">
   <input id="categoria" placeholder="Categoria (Mercado, Lazer...)" />
@@ -49,14 +71,14 @@ input, select, button {
   <div class="card">
     <h2>📊 Totais por Categoria</h2>
     <div id="categorias"></div>
-    <h3>Total do mês: R$ <span id="totalMes">0</span></h3>
+    <div class="total">Total do mês: R$ <span id="totalMes">0</span></div>
   </div>  <div class="card">
     <h2>📅 Relatório por mês</h2>
     <input type="month" id="mesFiltro" onchange="filtrarMes()" />
   </div>
 </div><div class="card">
   <h2>🧾 Lançamentos</h2>
-  <div id="lista"></div>
+  <div id="lista" class="grid"></div>
 </div><script>
 
 let despesas = [];
@@ -79,7 +101,7 @@ function salvar() {
 
   despesas.push({ categoria, valor, data, tipo });
 
-  // limpar campos após salvar
+  // limpar campos
   categoriaInput.value = "";
   valorInput.value = "";
   dataInput.value = "";
@@ -98,9 +120,10 @@ function mostrarLista(listaDados) {
 
   listaDados.forEach(d => {
     lista.innerHTML += `
-      <div class="linha">
-        ${d.categoria} - R$ ${d.valor.toFixed(2)} 
-        <span>${d.data || ""}</span>
+      <div class="item">
+        <b>${d.categoria}</b><br>
+        R$ ${d.valor.toFixed(2)}<br>
+        <small>${d.data || ""}</small>
       </div>
     `;
   });
@@ -135,7 +158,10 @@ function calcularTotais(listaDados) {
 function filtrarMes() {
   const mes = document.getElementById("mesFiltro").value;
 
-  if (!mes) return;
+  if (!mes) {
+    atualizar();
+    return;
+  }
 
   const filtrado = despesas.filter(d => d.data && d.data.startsWith(mes));
 
