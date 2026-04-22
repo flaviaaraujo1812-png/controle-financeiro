@@ -21,7 +21,7 @@ input, select, button {
 
 .flex {
   display:flex;
-  gap:10px;
+  gap:20px;
   flex-wrap:wrap;
 }
 
@@ -30,6 +30,13 @@ input, select, button {
   font-weight:bold;
 }
 
+/* lista em linha */
+.linha {
+  display:flex;
+  justify-content:space-between;
+  border-bottom:1px solid #ddd;
+  padding:8px 0;
+}
 </style></head><body><h1>💰 Controle Financeiro Familiar</h1><div class="card">
   <input id="categoria" placeholder="Categoria (Mercado, Lazer...)" />
   <input id="valor" type="number" placeholder="Valor" />
@@ -38,12 +45,15 @@ input, select, button {
     <option value="Variável">Variável</option>
   </select><button onclick="salvar()">Salvar</button>
 
-</div><div class="card">
-  <h2>📊 Totais por Categoria</h2>
-  <div id="categorias"></div>  <h3>Total do mês: R$ <span id="totalMes">0</span></h3>
-</div><div class="card">
-  <h2>📅 Relatório por mês</h2>
-  <input type="month" id="mesFiltro" onchange="filtrarMes()" />
+</div><div class="flex">
+  <div class="card">
+    <h2>📊 Totais por Categoria</h2>
+    <div id="categorias"></div>
+    <h3>Total do mês: R$ <span id="totalMes">0</span></h3>
+  </div>  <div class="card">
+    <h2>📅 Relatório por mês</h2>
+    <input type="month" id="mesFiltro" onchange="filtrarMes()" />
+  </div>
 </div><div class="card">
   <h2>🧾 Lançamentos</h2>
   <div id="lista"></div>
@@ -52,10 +62,15 @@ input, select, button {
 let despesas = [];
 
 function salvar() {
-  const categoria = document.getElementById("categoria").value;
-  const valor = Number(document.getElementById("valor").value);
-  const data = document.getElementById("data").value;
-  const tipo = document.getElementById("tipo").value;
+  const categoriaInput = document.getElementById("categoria");
+  const valorInput = document.getElementById("valor");
+  const dataInput = document.getElementById("data");
+  const tipoInput = document.getElementById("tipo");
+
+  const categoria = categoriaInput.value;
+  const valor = Number(valorInput.value);
+  const data = dataInput.value;
+  const tipo = tipoInput.value;
 
   if (!categoria || !valor) {
     alert("Preencha os campos!");
@@ -63,6 +78,11 @@ function salvar() {
   }
 
   despesas.push({ categoria, valor, data, tipo });
+
+  // limpar campos após salvar
+  categoriaInput.value = "";
+  valorInput.value = "";
+  dataInput.value = "";
 
   atualizar();
 }
@@ -78,9 +98,9 @@ function mostrarLista(listaDados) {
 
   listaDados.forEach(d => {
     lista.innerHTML += `
-      <div class="card">
-        <b>${d.categoria}</b> - R$ ${d.valor}<br>
-        ${d.data || ""} | ${d.tipo}
+      <div class="linha">
+        ${d.categoria} - R$ ${d.valor.toFixed(2)} 
+        <span>${d.data || ""}</span>
       </div>
     `;
   });
