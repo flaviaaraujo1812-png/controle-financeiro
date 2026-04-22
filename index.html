@@ -13,7 +13,7 @@ h1 {
   color:#1e3a8a;
 }
 
-/* FORMULÁRIO COMPACTO */
+/* FORM */
 .form {
   display:flex;
   gap:10px;
@@ -47,6 +47,14 @@ button:hover {
   background:#162d6b;
 }
 
+/* LAYOUT */
+.main {
+  display:grid;
+  grid-template-columns: 1fr 300px;
+  gap:20px;
+  margin-top:20px;
+}
+
 /* CARDS */
 .card {
   background:#fff;
@@ -55,15 +63,7 @@ button:hover {
   box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* FLEX */
-.flex {
-  display:flex;
-  gap:20px;
-  margin-top:15px;
-  flex-wrap:wrap;
-}
-
-/* CATEGORIAS EM LINHA */
+/* CATEGORIAS */
 .categorias {
   display:flex;
   gap:10px;
@@ -89,7 +89,7 @@ button:hover {
   text-align:center;
 }
 
-/* GRID 5 COLUNAS */
+/* GRID LANÇAMENTOS */
 .grid {
   display:grid;
   grid-template-columns: repeat(5, 1fr);
@@ -107,6 +107,13 @@ button:hover {
 small {
   color:#555;
 }
+
+/* RELATÓRIO */
+.relatorio-item {
+  display:flex;
+  justify-content:space-between;
+  margin-top:5px;
+}
 </style></head><body><h1>💰 Controle Financeiro Familiar</h1><div class="form">
   <input id="categoria" placeholder="Categoria" />
   <input id="valor" type="number" placeholder="Valor" />
@@ -115,19 +122,29 @@ small {
     <option value="Variável">Variável</option>
   </select><button onclick="salvar()">Salvar</button>
 
-</div><div class="flex">  <div class="card">
-    <h3>📊 Totais por Categoria</h3>
-    <div id="categorias" class="categorias"></div><div class="total-box">
-  Total do mês: R$ <span id="totalMes">0</span>
+</div><div class="main">  <!-- ESQUERDA -->  <div><div class="card">
+  <h3>📊 Totais por Categoria</h3>
+  <div id="categorias" class="categorias"></div>
+
+  <div class="total-box">
+    Total do mês: R$ <span id="totalMes">0</span>
+  </div>
 </div>
 
-  </div>  <div class="card">
-    <h3>📅 Relatório por mês</h3>
-    <input type="month" id="mesFiltro" onchange="filtrarMes()" />
-  </div></div><div class="card">
+<div class="card">
   <h3>🧾 Lançamentos</h3>
   <div id="lista" class="grid"></div>
-</div><script>
+</div>
+
+  </div>  <!-- DIREITA -->  <div class="card">
+    <h3>📅 Relatório por mês</h3>
+    <input type="month" id="mesFiltro" onchange="filtrarMes()" /><div id="relatorioLista"></div>
+
+<div class="total-box">
+  Total: R$ <span id="totalRelatorio">0</span>
+</div>
+
+  </div></div><script>
 
 let despesas = [];
 
@@ -149,10 +166,10 @@ function salvar() {
 
   despesas.push({ categoria, valor, data, tipo });
 
-  // limpar
+  // limpar e resetar data para hoje
   categoriaInput.value = "";
   valorInput.value = "";
-  dataInput.value = "";
+  dataInput.valueAsDate = new Date();
 
   atualizar();
 }
@@ -210,16 +227,42 @@ function calcularTotais(listaDados) {
 function filtrarMes() {
   const mes = document.getElementById("mesFiltro").value;
 
-  if (!mes) {
-    atualizar();
-    return;
-  }
+  const listaRel = document.getElementById("relatorioLista");
+  listaRel.innerHTML = "";
+
+  if (!mes) return;
 
   const filtrado = despesas.filter(d => d.data && d.data.startsWith(mes));
 
+  let total = 0;
+  let categorias = {};
+
+  filtrado.forEach(d => {
+    total += d.valor;
+
+    if (!categorias[d.categoria]) {
+      categorias[d.categoria] = 0;
+    }
+
+    categorias[d.categoria] += d.valor;
+  });
+
+  for (let cat in categorias) {
+    listaRel.innerHTML += `
+      <div class="relatorio-item">
+        <span>${cat}</span>
+        <span>R$ ${categorias[cat].toFixed(2)}</span>
+      </div>
+    `;
+  }
+
+  document.getElementById("totalRelatorio").innerText = total.toFixed(2);
+
   mostrarLista(filtrado);
-  calcularTotais(filtrado);
 }
+
+// data automática ao abrir
+document.getElementById("data").valueAsDate = new Date();
 
 </script></body>
 </html>
