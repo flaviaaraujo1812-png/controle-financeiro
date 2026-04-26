@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Controle Familiar</title><style>
+<title>Controle Familiar</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
 body {
   font-family: Arial;
   background:#eef2f7;
@@ -13,41 +13,29 @@ h1 {
   color:#1e3a8a;
 }
 
-/* FORM */
 .form {
   display:flex;
-  gap:10px;
+  gap:8px;
   flex-wrap:wrap;
   background:#fff;
-  padding:15px;
+  padding:12px;
   border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
 .form input, .form select {
-  padding:8px;
-  font-size:14px;
+  padding:6px;
+  font-size:13px;
 }
-
-.form input:nth-child(1) { width:180px; }
-.form input:nth-child(2) { width:100px; }
-.form input:nth-child(3) { width:140px; }
-.form select { width:120px; }
 
 button {
   background:#1e3a8a;
   color:#fff;
   border:none;
-  padding:8px 15px;
-  cursor:pointer;
+  padding:6px 12px;
   border-radius:6px;
+  cursor:pointer;
 }
 
-button:hover {
-  background:#162d6b;
-}
-
-/* LAYOUT */
 .main {
   display:grid;
   grid-template-columns: 1fr 300px;
@@ -55,130 +43,130 @@ button:hover {
   margin-top:20px;
 }
 
-/* CARDS */
 .card {
   background:#fff;
   padding:15px;
   border-radius:10px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.1);
 }
 
-/* CATEGORIAS */
 .categorias {
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  margin-top:10px;
 }
 
 .cat-item {
   background:#f1f5ff;
   padding:10px;
-  border-radius:8px;
   border-left:4px solid #1e3a8a;
-  min-width:120px;
+  border-radius:6px;
 }
 
-/* TOTAL */
 .total-box {
+  margin-top:10px;
   background:#dbeafe;
   padding:10px;
-  border-radius:8px;
-  margin-top:10px;
-  font-weight:bold;
   text-align:center;
+  font-weight:bold;
 }
 
-/* GRID LANÇAMENTOS */
 .grid {
   display:grid;
   grid-template-columns: repeat(5, 1fr);
   gap:10px;
-  margin-top:10px;
 }
 
 .item {
   background:#f1f5ff;
   padding:10px;
-  border-radius:8px;
   border-top:4px solid #1e3a8a;
-}
-
-small {
-  color:#555;
-}
-
-/* RELATÓRIO */
-.relatorio-item {
-  display:flex;
-  justify-content:space-between;
-  margin-top:5px;
+  border-radius:6px;
 }
 </style></head><body><h1>💰 Controle Financeiro Familiar</h1><div class="form">
-  <input id="categoria" placeholder="Categoria" />
-  <input id="valor" type="number" placeholder="Valor" />
-  <input id="data" type="date" />  <select id="tipo">
-    <option value="Fixa">Fixa</option>
-    <option value="Variável">Variável</option>
-  </select><button onclick="salvar()">Salvar</button>
-
-</div><div class="main">  <!-- ESQUERDA -->  <div><div class="card">
-  <h3>📊 Totais por Categoria</h3>
-  <div id="categorias" class="categorias"></div>
-
-  <div class="total-box">
-    Total do mês: R$ <span id="totalMes">0</span>
+  <input id="categoria" placeholder="Categoria">
+  <input id="valor" type="number" placeholder="Valor">
+  <input id="data" type="date">
+  <select id="tipo">
+    <option>Fixa</option>
+    <option>Variável</option>
+  </select>
+  <button onclick="salvar()">Salvar</button>
+</div><div class="main"><div>
+  <div class="card">
+    <h3>Totais por Categoria</h3>
+    <div id="categorias" class="categorias"></div>
+    <div class="total-box">
+      Total: R$ <span id="totalMes">0</span>
+    </div>
+  </div>  <div class="card">
+    <h3>Lançamentos</h3>
+    <div id="lista" class="grid"></div>
   </div>
-</div>
+</div><div class="card">
+  <h3>Relatório por mês</h3>
+  <input type="month" id="mesFiltro" onchange="filtrarMes()">
+  <div id="relatorio"></div>
+</div></div><script>
 
-<div class="card">
-  <h3>🧾 Lançamentos</h3>
-  <div id="lista" class="grid"></div>
-</div>
-
-  </div>  <!-- DIREITA -->  <div class="card">
-    <h3>📅 Relatório por mês</h3>
-    <input type="month" id="mesFiltro" onchange="filtrarMes()" /><div id="relatorioLista"></div>
-
-<div class="total-box">
-  Total: R$ <span id="totalRelatorio">0</span>
-</div>
-
-  </div></div><script>
+// 🔌 CONEXÃO SUPABASE
+const supabaseUrl = 'https://olcnvmnzyxnczgaxbkwt.supabase.co';
+const supabaseKey = 'sb_publishable_9JPDR9QP-R_DYY5UcxsvDA_3Ulc2HU3';
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 let despesas = [];
 
-function salvar() {
-  const categoriaInput = document.getElementById("categoria");
-  const valorInput = document.getElementById("valor");
-  const dataInput = document.getElementById("data");
-  const tipoInput = document.getElementById("tipo");
-
-  const categoria = categoriaInput.value;
-  const valor = Number(valorInput.value);
-  const data = dataInput.value;
-  const tipo = tipoInput.value;
+// 💾 SALVAR
+async function salvar() {
+  const categoria = document.getElementById("categoria").value;
+  const valor = Number(document.getElementById("valor").value);
+  const data = document.getElementById("data").value;
+  const tipo = document.getElementById("tipo").value;
 
   if (!categoria || !valor) {
     alert("Preencha os campos!");
     return;
   }
 
-  despesas.push({ categoria, valor, data, tipo });
+  const { error } = await supabase
+    .from('despesas')
+    .insert([{ categoria, valor, data, tipo }]);
 
-  // limpar e resetar data para hoje
-  categoriaInput.value = "";
-  valorInput.value = "";
-  dataInput.valueAsDate = new Date();
+  if (error) {
+    alert("Erro ao salvar!");
+    console.log(error);
+    return;
+  }
 
+  document.getElementById("categoria").value = "";
+  document.getElementById("valor").value = "";
+  document.getElementById("data").valueAsDate = new Date();
+
+  carregarDados();
+}
+
+// 📥 CARREGAR
+async function carregarDados() {
+  const { data, error } = await supabase
+    .from('despesas')
+    .select('*')
+    .order('data', { ascending: false });
+
+  if (error) {
+    console.log(error);
+    return;
+  }
+
+  despesas = data;
   atualizar();
 }
 
+// 📊 ATUALIZAR
 function atualizar() {
   mostrarLista(despesas);
   calcularTotais(despesas);
 }
 
+// 📋 LISTA
 function mostrarLista(listaDados) {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
@@ -187,82 +175,57 @@ function mostrarLista(listaDados) {
     lista.innerHTML += `
       <div class="item">
         <b>${d.categoria}</b><br>
-        R$ ${d.valor.toFixed(2)}<br>
-        <small>${d.data || ""}</small><br>
-        <small>${d.tipo}</small>
+        R$ ${d.valor}<br>
+        ${d.data || ""}<br>
+        ${d.tipo}
       </div>
     `;
   });
 }
 
+// 📈 TOTAIS
 function calcularTotais(listaDados) {
   let total = 0;
   let categorias = {};
 
   listaDados.forEach(d => {
-    total += d.valor;
+    total += Number(d.valor);
 
     if (!categorias[d.categoria]) {
       categorias[d.categoria] = 0;
     }
 
-    categorias[d.categoria] += d.valor;
+    categorias[d.categoria] += Number(d.valor);
   });
 
   document.getElementById("totalMes").innerText = total.toFixed(2);
 
-  const divCat = document.getElementById("categorias");
-  divCat.innerHTML = "";
+  const div = document.getElementById("categorias");
+  div.innerHTML = "";
 
   for (let cat in categorias) {
-    divCat.innerHTML += `
+    div.innerHTML += `
       <div class="cat-item">
-        <b>${cat}</b><br>
-        R$ ${categorias[cat].toFixed(2)}
+        ${cat}<br>R$ ${categorias[cat].toFixed(2)}
       </div>
     `;
   }
 }
 
+// 📅 FILTRO MÊS
 function filtrarMes() {
   const mes = document.getElementById("mesFiltro").value;
-
-  const listaRel = document.getElementById("relatorioLista");
-  listaRel.innerHTML = "";
 
   if (!mes) return;
 
   const filtrado = despesas.filter(d => d.data && d.data.startsWith(mes));
 
-  let total = 0;
-  let categorias = {};
-
-  filtrado.forEach(d => {
-    total += d.valor;
-
-    if (!categorias[d.categoria]) {
-      categorias[d.categoria] = 0;
-    }
-
-    categorias[d.categoria] += d.valor;
-  });
-
-  for (let cat in categorias) {
-    listaRel.innerHTML += `
-      <div class="relatorio-item">
-        <span>${cat}</span>
-        <span>R$ ${categorias[cat].toFixed(2)}</span>
-      </div>
-    `;
-  }
-
-  document.getElementById("totalRelatorio").innerText = total.toFixed(2);
-
   mostrarLista(filtrado);
 }
 
-// data automática ao abrir
+// 🚀 INICIAR
 document.getElementById("data").valueAsDate = new Date();
+carregarDados();
 
 </script></body>
 </html>
