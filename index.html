@@ -127,35 +127,38 @@ async function carregar() {
   atualizarTela();
 }
 
-// 🔹 SALVAR
 async function salvar() {
   const categoria = document.getElementById("categoria").value;
   const valor = parseFloat(document.getElementById("valor").value);
   const data = document.getElementById("data").value;
   const tipo = document.getElementById("tipo").value;
 
-  if (!categoria || !valor || !data) {
-    alert("Preencha todos os campos");
-    return;
-  }
+  console.log("Tentando salvar...");
 
-  const { error } = await supabase
+  const { data: retorno, error } = await supabase
     .from("despesas")
     .insert([
       {
-        categoria: categoria,
-        valor: valor,
-        data: data,
+        categoria,
+        valor,
+        data,
         descricao: categoria,
-        tipo: tipo
+        tipo
       }
-    ]);
+    ])
+    .select();
 
   if (error) {
-    alert("Erro ao salvar: " + error.message);
-    console.log(error);
+    console.error("ERRO:", error);
+    alert("Erro: " + error.message);
     return;
   }
+
+  console.log("Salvo:", retorno);
+  alert("Salvo com sucesso!");
+
+  carregar();
+}
 
   // limpar campos
   document.getElementById("categoria").value = "";
