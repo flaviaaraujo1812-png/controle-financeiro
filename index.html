@@ -25,12 +25,13 @@ h1 {
 
 .form {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   margin-bottom: 20px;
 }
 
 input, select, button {
   padding: 6px;
+  font-size: 14px;
 }
 
 button {
@@ -74,7 +75,7 @@ button {
 
 <div class="form">
   <input id="categoria" placeholder="Categoria">
-  <input id="valor" type="number" placeholder="Valor">
+  <input id="valor" type="number" step="0.01" placeholder="Valor">
   <input id="data" type="date">
   <select id="tipo">
     <option>Variável</option>
@@ -109,7 +110,7 @@ const supabase = window.supabase.createClient(
 
 let dados = [];
 
-// 🔹 CARREGAR AO ABRIR
+// 🔹 CARREGAR DADOS
 async function carregar() {
   const { data, error } = await supabase
     .from("despesas")
@@ -117,7 +118,7 @@ async function carregar() {
     .order("data", { ascending: false });
 
   if (error) {
-    alert("Erro ao carregar");
+    alert("Erro ao carregar: " + error.message);
     console.log(error);
     return;
   }
@@ -134,20 +135,29 @@ async function salvar() {
   const tipo = document.getElementById("tipo").value;
 
   if (!categoria || !valor || !data) {
-    alert("Preencha tudo");
+    alert("Preencha todos os campos");
     return;
   }
 
   const { error } = await supabase
     .from("despesas")
-    .insert([{ categoria, valor, data, tipo }]);
+    .insert([
+      {
+        categoria: categoria,
+        valor: valor,
+        data: data,
+        descricao: categoria,
+        tipo: tipo
+      }
+    ]);
 
   if (error) {
-    alert("Erro ao salvar");
+    alert("Erro ao salvar: " + error.message);
     console.log(error);
     return;
   }
 
+  // limpar campos
   document.getElementById("categoria").value = "";
   document.getElementById("valor").value = "";
   document.getElementById("data").value = "";
@@ -178,7 +188,7 @@ function atualizarTela(listaFiltrada = dados) {
     lista.innerHTML += `
       <div class="card">
         <strong>${item.categoria}</strong><br>
-        R$ ${item.valor.toFixed(2)}<br>
+        R$ ${Number(item.valor).toFixed(2)}<br>
         ${item.data}<br>
         ${item.tipo}
       </div>
@@ -197,7 +207,7 @@ function atualizarTela(listaFiltrada = dados) {
   totalMesDiv.innerText = "Total do mês: R$ " + total.toFixed(2);
 }
 
-// 🔹 FILTRO MÊS
+// 🔹 FILTRO POR MÊS
 function filtrarMes() {
   const mes = document.getElementById("filtroMes").value;
 
