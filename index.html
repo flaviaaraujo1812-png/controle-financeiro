@@ -14,7 +14,7 @@ body {
 }
 
 .container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: auto;
 }
 
@@ -23,6 +23,7 @@ h1 {
   color: #1e3a8a;
 }
 
+/* FORM MAIS COMPACTO */
 .form {
   display: flex;
   gap: 8px;
@@ -30,7 +31,8 @@ h1 {
 }
 
 input, select, button {
-  padding: 6px;
+  padding: 5px;
+  font-size: 13px;
 }
 
 button {
@@ -40,10 +42,17 @@ button {
   cursor: pointer;
 }
 
+/* LAYOUT LADO A LADO */
+.topo {
+  display: flex;
+  gap: 20px;
+}
+
 .box {
   background: white;
   padding: 15px;
   border-radius: 10px;
+  flex: 1;
 }
 
 .grid {
@@ -57,6 +66,7 @@ button {
   padding: 8px;
   background: #f1f5ff;
   border-radius: 6px;
+  font-size: 13px;
 }
 
 .total {
@@ -74,7 +84,7 @@ button {
 
 <div class="form">
   <input id="categoria" placeholder="Categoria">
-  <input id="valor" type="number" step="0.01" placeholder="Valor">
+  <input id="valor" type="number" placeholder="Valor">
   <input id="data" type="date">
   <select id="tipo">
     <option>Variável</option>
@@ -83,16 +93,15 @@ button {
   <button onclick="salvar()">Salvar</button>
 </div>
 
-<!-- 🔵 TOTAL + RELATÓRIO LADO A LADO -->
-<div style="display:flex; gap:20px; margin-bottom:20px;">
+<div class="topo">
 
-  <div class="box" style="flex:2;">
+  <div class="box">
     <h3>📊 Totais por Categoria</h3>
     <div id="totais" class="grid"></div>
     <div class="total" id="totalMes"></div>
   </div>
 
-  <div class="box" style="flex:1;">
+  <div class="box">
     <h3>📅 Relatório por mês</h3>
     <input type="month" id="filtroMes" onchange="filtrarMes()">
   </div>
@@ -114,7 +123,7 @@ const supabase = window.supabase.createClient(
 
 let dados = [];
 
-// 🔹 CARREGAR
+// CARREGAR
 async function carregar() {
   const { data, error } = await supabase
     .from("despesas")
@@ -122,7 +131,8 @@ async function carregar() {
     .order("data", { ascending: false });
 
   if (error) {
-    alert("Erro ao carregar: " + error.message);
+    console.log(error);
+    alert("Erro ao carregar dados");
     return;
   }
 
@@ -130,7 +140,7 @@ async function carregar() {
   atualizarTela();
 }
 
-// 🔹 SALVAR
+// SALVAR
 async function salvar() {
   const categoria = document.getElementById("categoria").value;
   const valor = parseFloat(document.getElementById("valor").value);
@@ -138,27 +148,26 @@ async function salvar() {
   const tipo = document.getElementById("tipo").value;
 
   if (!categoria || !valor || !data) {
-    alert("Preencha tudo");
+    alert("Preencha todos os campos");
     return;
   }
 
   const { error } = await supabase
     .from("despesas")
-    .insert([
-      {
-        categoria,
-        valor,
-        data,
-        descricao: categoria,
-        tipo
-      }
-    ]);
+    .insert([{
+      categoria: categoria,
+      valor: valor,
+      data: data,
+      tipo: tipo
+    }]);
 
   if (error) {
-    alert("Erro ao salvar: " + error.message);
+    console.log(error);
+    alert("Erro ao salvar");
     return;
   }
 
+  // limpar
   document.getElementById("categoria").value = "";
   document.getElementById("valor").value = "";
   document.getElementById("data").value = "";
@@ -166,7 +175,7 @@ async function salvar() {
   carregar();
 }
 
-// 🔹 TELA
+// ATUALIZAR TELA
 function atualizarTela(listaFiltrada = dados) {
   const lista = document.getElementById("lista");
   const totaisDiv = document.getElementById("totais");
@@ -179,12 +188,13 @@ function atualizarTela(listaFiltrada = dados) {
   let categorias = {};
 
   listaFiltrada.forEach(item => {
-    total += item.valor;
+    total += Number(item.valor);
 
     if (!categorias[item.categoria]) {
       categorias[item.categoria] = 0;
     }
-    categorias[item.categoria] += item.valor;
+
+    categorias[item.categoria] += Number(item.valor);
 
     lista.innerHTML += `
       <div class="card">
@@ -208,7 +218,7 @@ function atualizarTela(listaFiltrada = dados) {
   totalMesDiv.innerText = "Total do mês: R$ " + total.toFixed(2);
 }
 
-// 🔹 FILTRO
+// FILTRO
 function filtrarMes() {
   const mes = document.getElementById("filtroMes").value;
 
@@ -221,7 +231,7 @@ function filtrarMes() {
   atualizarTela(filtrado);
 }
 
-// 🔹 INICIAR
+// INICIAR
 carregar();
 </script>
 
