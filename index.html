@@ -46,6 +46,11 @@ button {
   cursor: pointer;
 }
 
+.excluir {
+  background: red;
+  margin-top: 5px;
+}
+
 .box {
   background: white;
   padding: 15px;
@@ -113,11 +118,15 @@ button {
 
 <script>
 
-// ✅ APENAS UMA VEZ
-var supabase = window.supabase.createClient(
-  "https://olcnvmnzyxnczgaxbkwt.supabase.co",
-  "sb_publishable_9JPDR9QP-R_DYY5UcxsvDA_3Ulc2HU3"
-);
+// 🔹 evita erro de duplicação
+if (!window.supabaseClient) {
+  window.supabaseClient = window.supabase.createClient(
+    "https://olcnvmnzyxnczgaxbkwt.supabase.co",
+    "sb_publishable_9JPDR9QP-R_DYY5UcxsvDA_3Ulc2HU3"
+  );
+}
+
+const supabase = window.supabaseClient;
 
 let dados = [];
 
@@ -167,6 +176,25 @@ async function salvar() {
   carregar();
 }
 
+// 🔹 EXCLUIR
+async function excluir(id) {
+
+  if (!confirm("Deseja excluir este lançamento?")) return;
+
+  const { error } = await supabase
+    .from("despesas")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.log(error);
+    alert("Erro ao excluir");
+    return;
+  }
+
+  carregar();
+}
+
 // 🔹 ATUALIZAR TELA
 function atualizarTela(listaFiltrada = dados) {
   const lista = document.getElementById("lista");
@@ -193,7 +221,8 @@ function atualizarTela(listaFiltrada = dados) {
         <strong>${item.categoria}</strong><br>
         R$ ${item.valor.toFixed(2)}<br>
         ${item.data}<br>
-        ${item.tipo}
+        ${item.tipo}<br><br>
+        <button class="excluir" onclick="excluir('${item.id}')">🗑️ Excluir</button>
       </div>
     `;
   });
