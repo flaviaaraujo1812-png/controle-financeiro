@@ -46,6 +46,11 @@ button {
   cursor: pointer;
 }
 
+.excluir {
+  background: red;
+  margin-top: 5px;
+}
+
 .box {
   background: white;
   padding: 15px;
@@ -95,6 +100,9 @@ button {
   <div class="box">
     <h3>📊 Totais por Categoria</h3>
     <div id="totais" class="grid"></div>
+
+    <div class="total" id="totalVariavel"></div>
+    <div class="total" id="totalFixa"></div>
     <div class="total" id="totalMes"></div>
   </div>
 
@@ -113,7 +121,7 @@ button {
 
 <script>
 
-// ✅ APENAS UMA VEZ
+// 🔹 conexão (igual ao seu que funciona)
 var supabase = window.supabase.createClient(
   "https://olcnvmnzyxnczgaxbkwt.supabase.co",
   "sb_publishable_9JPDR9QP-R_DYY5UcxsvDA_3Ulc2HU3"
@@ -167,33 +175,62 @@ async function salvar() {
   carregar();
 }
 
+// 🔹 EXCLUIR (NOVO)
+async function excluir(id) {
+  if (!confirm("Deseja excluir?")) return;
+
+  const { error } = await supabase
+    .from("despesas")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.log(error);
+    alert("Erro ao excluir");
+    return;
+  }
+
+  carregar();
+}
+
 // 🔹 ATUALIZAR TELA
 function atualizarTela(listaFiltrada = dados) {
   const lista = document.getElementById("lista");
   const totaisDiv = document.getElementById("totais");
+
   const totalMesDiv = document.getElementById("totalMes");
+  const totalVariavelDiv = document.getElementById("totalVariavel");
+  const totalFixaDiv = document.getElementById("totalFixa");
 
   lista.innerHTML = "";
   totaisDiv.innerHTML = "";
 
   let total = 0;
+  let totalVariavel = 0;
+  let totalFixa = 0;
+
   let categorias = {};
 
   listaFiltrada.forEach(item => {
-    total += item.valor;
+    const valor = Number(item.valor);
+    total += valor;
+
+    if (item.tipo === "Variável") totalVariavel += valor;
+    if (item.tipo === "Fixa") totalFixa += valor;
 
     if (!categorias[item.categoria]) {
       categorias[item.categoria] = 0;
     }
 
-    categorias[item.categoria] += item.valor;
+    categorias[item.categoria] += valor;
 
     lista.innerHTML += `
       <div class="card">
         <strong>${item.categoria}</strong><br>
-        R$ ${item.valor.toFixed(2)}<br>
+        R$ ${valor.toFixed(2)}<br>
         ${item.data}<br>
-        ${item.tipo}
+        ${item.tipo}<br>
+        <button class="excluir" onclick="excluir('${item.id}')">Excluir</button>
       </div>
     `;
   });
@@ -207,6 +244,8 @@ function atualizarTela(listaFiltrada = dados) {
     `;
   }
 
+  totalVariavelDiv.innerText = "Total Variável: R$ " + totalVariavel.toFixed(2);
+  totalFixaDiv.innerText = "Total Fixa: R$ " + totalFixa.toFixed(2);
   totalMesDiv.innerText = "Total do mês: R$ " + total.toFixed(2);
 }
 
