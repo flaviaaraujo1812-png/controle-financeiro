@@ -1,269 +1,198 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>Controle Financeiro Familiar</title>
-
-<!-- SUPABASE (APENAS UMA VEZ) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-body {
-  font-family: Arial;
-  background: #f5f7fb;
-  padding: 20px;
 }
 
 .container {
+  max-width: 1200px;
   max-width: 1100px;
-  margin: auto;
+margin: auto;
 }
 
-h1 {
-  text-align: center;
-  color: #1e3a8a;
+@@ -23,16 +23,20 @@
+color: #1e3a8a;
+}
+
+/* FORM MAIS COMPACTO */
+.topo {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
 }
 
 .form {
-  display: flex;
+display: flex;
+  gap: 8px;
   gap: 10px;
-  margin-bottom: 20px;
+margin-bottom: 20px;
 }
 
 input, select, button {
+  padding: 5px;
+  font-size: 13px;
   padding: 6px;
 }
 
 button {
-  background: #1e3a8a;
-  color: white;
-  border: none;
-  cursor: pointer;
+@@ -42,22 +46,17 @@
+cursor: pointer;
 }
 
-.excluir {
-  background: red;
-  margin-top: 5px;
-}
-
+/* LAYOUT LADO A LADO */
 .topo {
   display: flex;
   gap: 20px;
 }
 
 .box {
-  background: white;
-  padding: 15px;
-  border-radius: 10px;
-  flex: 1;
+background: white;
+padding: 15px;
+border-radius: 10px;
+  margin-bottom: 20px;
+flex: 1;
 }
 
 .grid {
-  display: grid;
+display: grid;
+  grid-template-columns: repeat(5, 1fr);
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+gap: 10px;
 }
 
-.card {
-  border-left: 4px solid #1e3a8a;
-  padding: 8px;
-  background: #f1f5ff;
-  border-radius: 6px;
+@@ -66,7 +65,6 @@
+padding: 8px;
+background: #f1f5ff;
+border-radius: 6px;
+  font-size: 13px;
 }
 
 .total {
-  margin-top: 10px;
-  font-weight: bold;
-}
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-<h1>💰 Controle Financeiro Familiar</h1>
-
-<div class="form">
-  <input id="categoria" placeholder="Categoria">
-  <input id="valor" type="number" step="0.01" placeholder="Valor">
-  <input id="data" type="date">
-  <select id="tipo">
-    <option>Variável</option>
-    <option>Fixa</option>
-  </select>
-  <button onclick="salvar()">Salvar</button>
+@@ -94,7 +92,6 @@ <h1>💰 Controle Financeiro Familiar</h1>
 </div>
 
 <div class="topo">
 
-  <div class="box">
-    <h3>📊 Totais por Categoria</h3>
-    <div id="totais" class="grid"></div>
-    <div class="total" id="totalMes"></div>
-  </div>
-
-  <div class="box">
-    <h3>📅 Relatório por mês</h3>
-    <input type="month" id="filtroMes" onchange="filtrarMes()">
-  </div>
+<div class="box">
+<h3>📊 Totais por Categoria</h3>
+<div id="totais" class="grid"></div>
+@@ -105,7 +102,6 @@ <h3>📊 Totais por Categoria</h3>
+<h3>📅 Relatório por mês</h3>
+<input type="month" id="filtroMes" onchange="filtrarMes()">
+</div>
 
 </div>
 
 <div class="box">
-  <h3>📋 Lançamentos</h3>
-  <div id="lista" class="grid"></div>
-</div>
-
+@@ -116,14 +112,16 @@ <h3>📋 Lançamentos</h3>
 </div>
 
 <script>
 
-// 🔒 PROTEÇÃO CONTRA DUPLICAÇÃO
-if (!window.supabaseClient) {
-  window.supabaseClient = window.supabase.createClient(
-    "https://olcnvmnzyxnczgaxbkwt.supabase.co",
-    "sb_publishable_9JPDR9QP-R_DYY5UcxsvDA_3Ulc2HU3"
-  );
-}
-
-const supabase = window.supabaseClient;
+// ✅ APENAS UMA VEZ
+const supabase = window.supabase.createClient(
+"https://olcnvmnzyxnczgaxbkwt.supabase.co",
+"sb_publishable_9JPDR9QP-R_DYY5UcxsvDA_3Ulc2HU3"
+);
 
 let dados = [];
 
-// 🔹 CARREGAR DADOS
+// CARREGAR
+// 🔹 CARREGAR
 async function carregar() {
-  const { data, error } = await supabase
-    .from("despesas")
-    .select("*")
-    .order("data", { ascending: false });
+const { data, error } = await supabase
+.from("despesas")
+@@ -132,50 +130,44 @@ <h3>📋 Lançamentos</h3>
 
-  if (error) {
-    console.log(error);
+if (error) {
+console.log(error);
     alert("Erro ao carregar dados");
-    return;
-  }
-
-  dados = data;
-  atualizarTela();
+    alert("Erro ao carregar");
+return;
 }
 
+dados = data;
+atualizarTela();
+}
+
+// SALVAR
 // 🔹 SALVAR
 async function salvar() {
-  const categoria = document.getElementById("categoria").value.trim();
-  const valorInput = document.getElementById("valor").value;
-  const data = document.getElementById("data").value;
-  const tipo = document.getElementById("tipo").value;
+const categoria = document.getElementById("categoria").value;
+const valor = parseFloat(document.getElementById("valor").value);
+const data = document.getElementById("data").value;
+const tipo = document.getElementById("tipo").value;
 
-  const valor = parseFloat(valorInput);
-
-  if (!categoria || !valorInput || !data) {
+if (!categoria || !valor || !data) {
     alert("Preencha todos os campos");
-    return;
-  }
+    alert("Preencha tudo");
+return;
+}
 
-  if (isNaN(valor)) {
-    alert("Valor inválido");
-    return;
-  }
-
-  const { error } = await supabase
-    .from("despesas")
+const { error } = await supabase
+.from("despesas")
+    .insert([{
+      categoria: categoria,
+      valor: valor,
+      data: data,
+      tipo: tipo
+    }]);
     .insert([{ categoria, valor, data, tipo }]);
 
-  if (error) {
-    console.log(error);
-    alert("Erro ao salvar: " + error.message);
-    return;
-  }
-
-  document.getElementById("categoria").value = "";
-  document.getElementById("valor").value = "";
-  document.getElementById("data").value = "";
-
-  carregar();
+if (error) {
+console.log(error);
+alert("Erro ao salvar");
+return;
 }
 
-// 🔹 EXCLUIR
-async function excluir(id) {
-  if (!confirm("Deseja excluir este lançamento?")) return;
+  // limpar
+document.getElementById("categoria").value = "";
+document.getElementById("valor").value = "";
+document.getElementById("data").value = "";
 
-  const { error } = await supabase
-    .from("despesas")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.log(error);
-    alert("Erro ao excluir");
-    return;
-  }
-
-  carregar();
+carregar();
 }
 
+// ATUALIZAR TELA
 // 🔹 ATUALIZAR TELA
 function atualizarTela(listaFiltrada = dados) {
-  const lista = document.getElementById("lista");
-  const totaisDiv = document.getElementById("totais");
-  const totalMesDiv = document.getElementById("totalMes");
+const lista = document.getElementById("lista");
+const totaisDiv = document.getElementById("totais");
+@@ -188,18 +180,18 @@ <h3>📋 Lançamentos</h3>
+let categorias = {};
 
-  lista.innerHTML = "";
-  totaisDiv.innerHTML = "";
+listaFiltrada.forEach(item => {
+    total += Number(item.valor);
+    total += item.valor;
 
-  let total = 0;
-  let categorias = {};
-
-  listaFiltrada.forEach(item => {
-    const valor = Number(item.valor);
-    total += valor;
-
-    if (!categorias[item.categoria]) {
-      categorias[item.categoria] = 0;
-    }
-
-    categorias[item.categoria] += valor;
-
-    lista.innerHTML += `
-      <div class="card">
-        <strong>${item.categoria}</strong><br>
-        R$ ${valor.toFixed(2)}<br>
-        ${item.data}<br>
-        ${item.tipo}<br><br>
-        <button class="excluir" onclick="excluir('${item.id}')">🗑️ Excluir</button>
-      </div>
-    `;
-  });
-
-  for (let cat in categorias) {
-    totaisDiv.innerHTML += `
-      <div class="card">
-        <strong>${cat}</strong><br>
-        R$ ${categorias[cat].toFixed(2)}
-      </div>
-    `;
-  }
-
-  totalMesDiv.innerText = "Total do mês: R$ " + total.toFixed(2);
+if (!categorias[item.categoria]) {
+categorias[item.categoria] = 0;
 }
 
+    categorias[item.categoria] += Number(item.valor);
+    categorias[item.categoria] += item.valor;
+
+lista.innerHTML += `
+     <div class="card">
+       <strong>${item.categoria}</strong><br>
+        R$ ${Number(item.valor).toFixed(2)}<br>
+        R$ ${item.valor.toFixed(2)}<br>
+       ${item.data}<br>
+       ${item.tipo}
+     </div>
+@@ -218,7 +210,7 @@ <h3>📋 Lançamentos</h3>
+totalMesDiv.innerText = "Total do mês: R$ " + total.toFixed(2);
+}
+
+// FILTRO
 // 🔹 FILTRO
 function filtrarMes() {
-  const mes = document.getElementById("filtroMes").value;
+const mes = document.getElementById("filtroMes").value;
 
-  if (!mes) {
-    atualizarTela();
-    return;
-  }
-
-  const filtrado = dados.filter(d => d.data.startsWith(mes));
-  atualizarTela(filtrado);
+@@ -231,8 +223,9 @@ <h3>📋 Lançamentos</h3>
+atualizarTela(filtrado);
 }
 
+// INICIAR
 // 🔹 INICIAR
 carregar();
 
 </script>
 
 </body>
-</html>
