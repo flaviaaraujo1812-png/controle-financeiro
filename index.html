@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Controle Financeiro Familiar</title>
 
+<!-- SUPABASE (APENAS UMA VEZ) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -21,12 +22,6 @@ body {
 h1 {
   text-align: center;
   color: #1e3a8a;
-}
-
-.topo {
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
 }
 
 .form {
@@ -51,11 +46,15 @@ button {
   margin-top: 5px;
 }
 
+.topo {
+  display: flex;
+  gap: 20px;
+}
+
 .box {
   background: white;
   padding: 15px;
   border-radius: 10px;
-  margin-bottom: 20px;
   flex: 1;
 }
 
@@ -87,7 +86,7 @@ button {
 
 <div class="form">
   <input id="categoria" placeholder="Categoria">
-  <input id="valor" type="number" placeholder="Valor">
+  <input id="valor" type="number" step="0.01" placeholder="Valor">
   <input id="data" type="date">
   <select id="tipo">
     <option>Variável</option>
@@ -97,6 +96,7 @@ button {
 </div>
 
 <div class="topo">
+
   <div class="box">
     <h3>📊 Totais por Categoria</h3>
     <div id="totais" class="grid"></div>
@@ -107,6 +107,7 @@ button {
     <h3>📅 Relatório por mês</h3>
     <input type="month" id="filtroMes" onchange="filtrarMes()">
   </div>
+
 </div>
 
 <div class="box">
@@ -118,7 +119,7 @@ button {
 
 <script>
 
-// 🔹 evita erro de duplicação
+// 🔒 PROTEÇÃO CONTRA DUPLICAÇÃO
 if (!window.supabaseClient) {
   window.supabaseClient = window.supabase.createClient(
     "https://olcnvmnzyxnczgaxbkwt.supabase.co",
@@ -126,11 +127,11 @@ if (!window.supabaseClient) {
   );
 }
 
-var supabase = window.supabaseClient;
+const supabase = window.supabaseClient;
 
 let dados = [];
 
-// 🔹 CARREGAR
+// 🔹 CARREGAR DADOS
 async function carregar() {
   const { data, error } = await supabase
     .from("despesas")
@@ -139,7 +140,7 @@ async function carregar() {
 
   if (error) {
     console.log(error);
-    alert("Erro ao carregar");
+    alert("Erro ao carregar dados");
     return;
   }
 
@@ -149,13 +150,20 @@ async function carregar() {
 
 // 🔹 SALVAR
 async function salvar() {
-  const categoria = document.getElementById("categoria").value;
-  const valor = parseFloat(document.getElementById("valor").value);
+  const categoria = document.getElementById("categoria").value.trim();
+  const valorInput = document.getElementById("valor").value;
   const data = document.getElementById("data").value;
   const tipo = document.getElementById("tipo").value;
 
-  if (!categoria || !valor || !data) {
-    alert("Preencha tudo");
+  const valor = parseFloat(valorInput);
+
+  if (!categoria || !valorInput || !data) {
+    alert("Preencha todos os campos");
+    return;
+  }
+
+  if (isNaN(valor)) {
+    alert("Valor inválido");
     return;
   }
 
@@ -165,7 +173,7 @@ async function salvar() {
 
   if (error) {
     console.log(error);
-    alert("Erro ao salvar");
+    alert("Erro ao salvar: " + error.message);
     return;
   }
 
@@ -178,7 +186,6 @@ async function salvar() {
 
 // 🔹 EXCLUIR
 async function excluir(id) {
-
   if (!confirm("Deseja excluir este lançamento?")) return;
 
   const { error } = await supabase
@@ -208,18 +215,19 @@ function atualizarTela(listaFiltrada = dados) {
   let categorias = {};
 
   listaFiltrada.forEach(item => {
-    total += item.valor;
+    const valor = Number(item.valor);
+    total += valor;
 
     if (!categorias[item.categoria]) {
       categorias[item.categoria] = 0;
     }
 
-    categorias[item.categoria] += item.valor;
+    categorias[item.categoria] += valor;
 
     lista.innerHTML += `
       <div class="card">
         <strong>${item.categoria}</strong><br>
-        R$ ${item.valor.toFixed(2)}<br>
+        R$ ${valor.toFixed(2)}<br>
         ${item.data}<br>
         ${item.tipo}<br><br>
         <button class="excluir" onclick="excluir('${item.id}')">🗑️ Excluir</button>
