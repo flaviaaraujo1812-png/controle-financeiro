@@ -14,7 +14,7 @@ body {
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: auto;
 }
 
@@ -23,16 +23,20 @@ h1 {
   color: #1e3a8a;
 }
 
-/* FORM MAIS COMPACTO */
+.topo {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
 .form {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 20px;
 }
 
 input, select, button {
-  padding: 5px;
-  font-size: 13px;
+  padding: 6px;
 }
 
 button {
@@ -42,22 +46,17 @@ button {
   cursor: pointer;
 }
 
-/* LAYOUT LADO A LADO */
-.topo {
-  display: flex;
-  gap: 20px;
-}
-
 .box {
   background: white;
   padding: 15px;
   border-radius: 10px;
+  margin-bottom: 20px;
   flex: 1;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 }
 
@@ -66,7 +65,6 @@ button {
   padding: 8px;
   background: #f1f5ff;
   border-radius: 6px;
-  font-size: 13px;
 }
 
 .total {
@@ -94,7 +92,6 @@ button {
 </div>
 
 <div class="topo">
-
   <div class="box">
     <h3>📊 Totais por Categoria</h3>
     <div id="totais" class="grid"></div>
@@ -105,7 +102,6 @@ button {
     <h3>📅 Relatório por mês</h3>
     <input type="month" id="filtroMes" onchange="filtrarMes()">
   </div>
-
 </div>
 
 <div class="box">
@@ -116,6 +112,8 @@ button {
 </div>
 
 <script>
+
+// ✅ APENAS UMA VEZ
 const supabase = window.supabase.createClient(
   "https://olcnvmnzyxnczgaxbkwt.supabase.co",
   "sb_publishable_9JPDR9QP-R_DYY5UcxsvDA_3Ulc2HU3"
@@ -123,7 +121,7 @@ const supabase = window.supabase.createClient(
 
 let dados = [];
 
-// CARREGAR
+// 🔹 CARREGAR
 async function carregar() {
   const { data, error } = await supabase
     .from("despesas")
@@ -132,7 +130,7 @@ async function carregar() {
 
   if (error) {
     console.log(error);
-    alert("Erro ao carregar dados");
+    alert("Erro ao carregar");
     return;
   }
 
@@ -140,7 +138,7 @@ async function carregar() {
   atualizarTela();
 }
 
-// SALVAR
+// 🔹 SALVAR
 async function salvar() {
   const categoria = document.getElementById("categoria").value;
   const valor = parseFloat(document.getElementById("valor").value);
@@ -148,18 +146,13 @@ async function salvar() {
   const tipo = document.getElementById("tipo").value;
 
   if (!categoria || !valor || !data) {
-    alert("Preencha todos os campos");
+    alert("Preencha tudo");
     return;
   }
 
   const { error } = await supabase
     .from("despesas")
-    .insert([{
-      categoria: categoria,
-      valor: valor,
-      data: data,
-      tipo: tipo
-    }]);
+    .insert([{ categoria, valor, data, tipo }]);
 
   if (error) {
     console.log(error);
@@ -167,7 +160,6 @@ async function salvar() {
     return;
   }
 
-  // limpar
   document.getElementById("categoria").value = "";
   document.getElementById("valor").value = "";
   document.getElementById("data").value = "";
@@ -175,7 +167,7 @@ async function salvar() {
   carregar();
 }
 
-// ATUALIZAR TELA
+// 🔹 ATUALIZAR TELA
 function atualizarTela(listaFiltrada = dados) {
   const lista = document.getElementById("lista");
   const totaisDiv = document.getElementById("totais");
@@ -188,18 +180,18 @@ function atualizarTela(listaFiltrada = dados) {
   let categorias = {};
 
   listaFiltrada.forEach(item => {
-    total += Number(item.valor);
+    total += item.valor;
 
     if (!categorias[item.categoria]) {
       categorias[item.categoria] = 0;
     }
 
-    categorias[item.categoria] += Number(item.valor);
+    categorias[item.categoria] += item.valor;
 
     lista.innerHTML += `
       <div class="card">
         <strong>${item.categoria}</strong><br>
-        R$ ${Number(item.valor).toFixed(2)}<br>
+        R$ ${item.valor.toFixed(2)}<br>
         ${item.data}<br>
         ${item.tipo}
       </div>
@@ -218,7 +210,7 @@ function atualizarTela(listaFiltrada = dados) {
   totalMesDiv.innerText = "Total do mês: R$ " + total.toFixed(2);
 }
 
-// FILTRO
+// 🔹 FILTRO
 function filtrarMes() {
   const mes = document.getElementById("filtroMes").value;
 
@@ -231,8 +223,9 @@ function filtrarMes() {
   atualizarTela(filtrado);
 }
 
-// INICIAR
+// 🔹 INICIAR
 carregar();
+
 </script>
 
 </body>
