@@ -86,13 +86,17 @@ button {
 <h1>💰 Controle Financeiro Familiar</h1>
 
 <div class="form">
-  <input id="categoria" placeholder="Categoria">
+  <input id="categoria" list="listaCategorias" placeholder="Categoria">
+  <datalist id="listaCategorias"></datalist>
+
   <input id="valor" type="number" placeholder="Valor">
   <input id="data" type="date">
+
   <select id="tipo">
     <option>Variável</option>
     <option>Fixa</option>
   </select>
+
   <button onclick="salvar()">Salvar</button>
 </div>
 
@@ -121,13 +125,16 @@ button {
 
 <script>
 
-// 🔹 conexão (igual ao seu que funciona)
+// 🔹 conexão
 var supabase = window.supabase.createClient(
   "https://olcnvmnzyxnczgaxbkwt.supabase.co",
   "sb_publishable_9JPDR9QP-R_DYY5UcxsvDA_3Ulc2HU3"
 );
 
 let dados = [];
+
+// 🔹 DATA AUTOMÁTICA
+document.getElementById("data").valueAsDate = new Date();
 
 // 🔹 CARREGAR
 async function carregar() {
@@ -170,12 +177,12 @@ async function salvar() {
 
   document.getElementById("categoria").value = "";
   document.getElementById("valor").value = "";
-  document.getElementById("data").value = "";
+  document.getElementById("data").valueAsDate = new Date();
 
   carregar();
 }
 
-// 🔹 EXCLUIR (NOVO)
+// 🔹 EXCLUIR
 async function excluir(id) {
   if (!confirm("Deseja excluir?")) return;
 
@@ -202,8 +209,11 @@ function atualizarTela(listaFiltrada = dados) {
   const totalVariavelDiv = document.getElementById("totalVariavel");
   const totalFixaDiv = document.getElementById("totalFixa");
 
+  const datalist = document.getElementById("listaCategorias");
+
   lista.innerHTML = "";
   totaisDiv.innerHTML = "";
+  datalist.innerHTML = "";
 
   let total = 0;
   let totalVariavel = 0;
@@ -233,6 +243,13 @@ function atualizarTela(listaFiltrada = dados) {
         <button class="excluir" onclick="excluir('${item.id}')">Excluir</button>
       </div>
     `;
+  });
+
+  // 🔹 categorias automáticas
+  let categoriasUnicas = [...new Set(dados.map(d => d.categoria))];
+
+  categoriasUnicas.forEach(cat => {
+    datalist.innerHTML += `<option value="${cat}">`;
   });
 
   for (let cat in categorias) {
