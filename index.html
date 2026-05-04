@@ -1,7 +1,15 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Controle Financeiro Familiar</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 body {
   font-family: Arial;
-  background: #0f172a;
+  background: linear-gradient(180deg, #0f172a, #1e293b);
   padding: 20px;
   color: #e2e8f0;
 }
@@ -13,10 +21,10 @@ body {
 
 h1 {
   text-align: center;
-  color: #e2e8f0;
+  margin-bottom: 20px;
 }
 
-/* 🔹 FORM */
+/* FORM */
 .form {
   display: flex;
   gap: 10px;
@@ -27,11 +35,12 @@ input, select {
   padding: 8px;
   border-radius: 6px;
   border: none;
+  outline: none;
 }
 
 button {
   padding: 8px 12px;
-  background: #1d4ed8;
+  background: #2563eb;
   color: white;
   border: none;
   border-radius: 6px;
@@ -39,83 +48,76 @@ button {
 }
 
 button:hover {
-  background: #1e40af;
+  background: #1d4ed8;
 }
 
 .excluir {
   background: #dc2626;
-  margin-top: 5px;
+  margin-top: 6px;
 }
 
 .excluir:hover {
   background: #991b1b;
 }
 
-/* 🔹 RESUMO */
+/* RESUMO */
 .resumo {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 25px;
 }
 
 .resumo-card {
   flex: 1;
-  padding: 15px;
-  border-radius: 10px;
-  color: white;
+  padding: 18px;
+  border-radius: 12px;
   font-weight: bold;
   text-align: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
 }
 
-.total-mes { background: #1d4ed8; }
-.total-variavel { background: #16a34a; }
-.total-fixa { background: #334155; }
+.total-mes { background: linear-gradient(45deg,#2563eb,#1d4ed8); }
+.total-variavel { background: linear-gradient(45deg,#16a34a,#15803d); }
+.total-fixa { background: linear-gradient(45deg,#475569,#334155); }
 
-/* 🔹 TOPO */
+/* BOX */
 .topo {
   display: flex;
   gap: 20px;
   margin-bottom: 20px;
 }
 
-/* 🔹 BOX (principal melhoria aqui) */
 .box {
-  background: #f8fafc; /* antes branco puro */
+  background: #f1f5f9;
   padding: 20px;
   border-radius: 14px;
   flex: 1;
   color: #1e293b;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
 }
 
-/* 🔹 GRID */
+/* GRID */
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
 
-/* 🔹 CARDS */
+/* CARD */
 .card {
-  border-left: 5px solid #1d4ed8;
+  border-left: 5px solid #2563eb;
   padding: 12px;
   background: #ffffff;
   border-radius: 10px;
   transition: 0.2s;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
 
 .card:hover {
   transform: translateY(-3px);
 }
 
-/* 🔹 TITULOS */
-h3 {
-  margin-bottom: 15px;
-}
-
-/* 🔹 MOBILE (melhora automática) */
+/* RESPONSIVO */
 @media (max-width: 768px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);
@@ -130,3 +132,175 @@ h3 {
   }
 }
 </style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>💰 Controle Financeiro Familiar</h1>
+
+<div class="form">
+  <input id="categoria" list="listaCategorias" placeholder="Categoria">
+  <datalist id="listaCategorias"></datalist>
+
+  <input id="valor" type="number" placeholder="Valor">
+  <input id="data" type="date">
+
+  <select id="tipo">
+    <option>Variável</option>
+    <option>Fixa</option>
+  </select>
+
+  <button onclick="salvar()">Salvar</button>
+</div>
+
+<!-- RESUMO -->
+<div class="resumo">
+  <div class="resumo-card total-mes" id="totalMes"></div>
+  <div class="resumo-card total-variavel" id="totalVariavel"></div>
+  <div class="resumo-card total-fixa" id="totalFixa"></div>
+</div>
+
+<div class="topo">
+  <div class="box">
+    <h3>📊 Totais por Categoria</h3>
+    <div id="totais" class="grid"></div>
+  </div>
+
+  <div class="box">
+    <h3>📅 Relatório por mês</h3>
+    <input type="month" id="filtroMes" onchange="filtrarMes()">
+  </div>
+</div>
+
+<div class="box">
+  <h3>📋 Lançamentos</h3>
+  <div id="lista" class="grid"></div>
+</div>
+
+</div>
+
+<script>
+
+var supabase = window.supabase.createClient(
+  "https://olcnvmnzyxnczgaxbkwt.supabase.co",
+  "sb_publishable_9JPDR9QP-R_DYY5UcxsvDA_3Ulc2HU3"
+);
+
+let dados = [];
+
+document.getElementById("data").valueAsDate = new Date();
+
+async function carregar() {
+  const { data, error } = await supabase
+    .from("despesas")
+    .select("*")
+    .order("data", { ascending: false });
+
+  if (error) return alert("Erro ao carregar");
+
+  dados = data;
+  atualizarTela();
+}
+
+async function salvar() {
+  const categoria = document.getElementById("categoria").value;
+  const valor = parseFloat(document.getElementById("valor").value);
+  const data = document.getElementById("data").value;
+  const tipo = document.getElementById("tipo").value;
+
+  if (!categoria || !valor || !data) return alert("Preencha tudo");
+
+  const { error } = await supabase
+    .from("despesas")
+    .insert([{ categoria, valor, data, tipo }]);
+
+  if (error) return alert("Erro ao salvar");
+
+  document.getElementById("categoria").value = "";
+  document.getElementById("valor").value = "";
+  document.getElementById("data").valueAsDate = new Date();
+
+  carregar();
+}
+
+async function excluir(id) {
+  if (!confirm("Deseja excluir?")) return;
+
+  const { error } = await supabase
+    .from("despesas")
+    .delete()
+    .eq("id", id);
+
+  if (error) return alert("Erro ao excluir");
+
+  carregar();
+}
+
+function atualizarTela(listaFiltrada = dados) {
+  const lista = document.getElementById("lista");
+  const totaisDiv = document.getElementById("totais");
+  const totalMesDiv = document.getElementById("totalMes");
+  const totalVariavelDiv = document.getElementById("totalVariavel");
+  const totalFixaDiv = document.getElementById("totalFixa");
+  const datalist = document.getElementById("listaCategorias");
+
+  lista.innerHTML = "";
+  totaisDiv.innerHTML = "";
+  datalist.innerHTML = "";
+
+  let total = 0, totalVariavel = 0, totalFixa = 0;
+  let categorias = {};
+
+  listaFiltrada.forEach(item => {
+    const valor = Number(item.valor);
+    total += valor;
+
+    if (item.tipo === "Variável") totalVariavel += valor;
+    if (item.tipo === "Fixa") totalFixa += valor;
+
+    categorias[item.categoria] = (categorias[item.categoria] || 0) + valor;
+
+    lista.innerHTML += `
+      <div class="card">
+        <strong>${item.categoria}</strong><br>
+        R$ ${valor.toFixed(2)}<br>
+        ${item.data}<br>
+        ${item.tipo}<br>
+        <button class="excluir" onclick="excluir('${item.id}')">Excluir</button>
+      </div>
+    `;
+  });
+
+  [...new Set(dados.map(d => d.categoria))].forEach(cat => {
+    datalist.innerHTML += `<option value="${cat}">`;
+  });
+
+  for (let cat in categorias) {
+    totaisDiv.innerHTML += `
+      <div class="card">
+        <strong>${cat}</strong><br>
+        R$ ${categorias[cat].toFixed(2)}
+      </div>
+    `;
+  }
+
+  totalMesDiv.innerText = "Total: R$ " + total.toFixed(2);
+  totalVariavelDiv.innerText = "Variável: R$ " + totalVariavel.toFixed(2);
+  totalFixaDiv.innerText = "Fixa: R$ " + totalFixa.toFixed(2);
+}
+
+function filtrarMes() {
+  const mes = document.getElementById("filtroMes").value;
+  if (!mes) return atualizarTela();
+
+  atualizarTela(dados.filter(d => d.data.startsWith(mes)));
+}
+
+carregar();
+
+</script>
+
+</body>
+</html>
