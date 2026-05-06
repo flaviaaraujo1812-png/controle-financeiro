@@ -9,7 +9,7 @@
 <style>
 body {
   font-family: Arial;
-  background: linear-gradient(180deg, #0f172a, #1e293b);
+  background: #0f172a;
   padding: 20px;
   color: #e2e8f0;
 }
@@ -28,16 +28,16 @@ h1 {
 .form {
   display: flex;
   gap: 10px;
-  margin-bottom: 25px;
+  margin-bottom: 20px;
 }
 
 input, select {
   padding: 8px;
   border-radius: 6px;
   border: none;
-  outline: none;
 }
 
+/* BOTÕES */
 button {
   padding: 8px 12px;
   background: #2563eb;
@@ -48,12 +48,14 @@ button {
 }
 
 button:hover {
-  background: #1d4ed8;
+  background: #1e40af;
 }
 
 .excluir {
   background: #dc2626;
-  margin-top: 6px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 5px;
 }
 
 .excluir:hover {
@@ -63,37 +65,33 @@ button:hover {
 /* RESUMO */
 .resumo {
   display: flex;
-  gap: 12px;
-  margin-bottom: 25px;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .resumo-card {
   flex: 1;
-  padding: 18px;
-  border-radius: 12px;
+  padding: 12px;
+  border-radius: 10px;
   font-weight: bold;
   text-align: center;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
 }
 
-.total-mes { background: linear-gradient(45deg,#2563eb,#1d4ed8); }
-.total-variavel { background: linear-gradient(45deg,#16a34a,#15803d); }
-.total-fixa { background: linear-gradient(45deg,#475569,#334155); }
+.total-mes { background: #1d4ed8; }
+.total-variavel { background: #16a34a; }
+.total-fixa { background: #334155; }
 
 /* BOX */
 .topo {
   display: flex;
   gap: 20px;
-  margin-bottom: 20px;
 }
 
 .box {
-  background: #f1f5f9;
-  padding: 20px;
-  border-radius: 14px;
+  background: #1e293b;
+  padding: 15px;
+  border-radius: 12px;
   flex: 1;
-  color: #1e293b;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.35);
 }
 
 /* GRID */
@@ -103,33 +101,23 @@ button:hover {
   gap: 12px;
 }
 
-/* CARD */
+/* CARDS (MAIS COMPACTOS 🔥) */
 .card {
-  border-left: 5px solid #2563eb;
-  padding: 12px;
-  background: #ffffff;
-  border-radius: 10px;
-  transition: 0.2s;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  background: #0f172a;
+  padding: 8px;
+  border-radius: 8px;
+  border-left: 4px solid #2563eb;
+  font-size: 13px;
+  line-height: 1.3;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.card:hover {
-  transform: translateY(-3px);
-}
-
-/* RESPONSIVO */
-@media (max-width: 768px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .topo {
-    flex-direction: column;
-  }
-
-  .resumo {
-    flex-direction: column;
-  }
+/* botão dentro do card */
+.card button {
+  align-self: flex-start;
+  margin-top: 5px;
 }
 </style>
 </head>
@@ -174,7 +162,7 @@ button:hover {
   </div>
 </div>
 
-<div class="box">
+<div class="box" style="margin-top:20px;">
   <h3>📋 Lançamentos</h3>
   <div id="lista" class="grid"></div>
 </div>
@@ -192,31 +180,42 @@ let dados = [];
 
 document.getElementById("data").valueAsDate = new Date();
 
+// CARREGAR
 async function carregar() {
   const { data, error } = await supabase
     .from("despesas")
     .select("*")
     .order("data", { ascending: false });
 
-  if (error) return alert("Erro ao carregar");
+  if (error) {
+    alert("Erro ao carregar");
+    return;
+  }
 
   dados = data;
   atualizarTela();
 }
 
+// SALVAR
 async function salvar() {
   const categoria = document.getElementById("categoria").value;
   const valor = parseFloat(document.getElementById("valor").value);
   const data = document.getElementById("data").value;
   const tipo = document.getElementById("tipo").value;
 
-  if (!categoria || !valor || !data) return alert("Preencha tudo");
+  if (!categoria || !valor || !data) {
+    alert("Preencha tudo");
+    return;
+  }
 
   const { error } = await supabase
     .from("despesas")
     .insert([{ categoria, valor, data, tipo }]);
 
-  if (error) return alert("Erro ao salvar");
+  if (error) {
+    alert("Erro ao salvar");
+    return;
+  }
 
   document.getElementById("categoria").value = "";
   document.getElementById("valor").value = "";
@@ -225,32 +224,31 @@ async function salvar() {
   carregar();
 }
 
+// EXCLUIR
 async function excluir(id) {
   if (!confirm("Deseja excluir?")) return;
 
-  const { error } = await supabase
+  await supabase
     .from("despesas")
     .delete()
     .eq("id", id);
 
-  if (error) return alert("Erro ao excluir");
-
   carregar();
 }
 
+// TELA
 function atualizarTela(listaFiltrada = dados) {
   const lista = document.getElementById("lista");
   const totaisDiv = document.getElementById("totais");
-  const totalMesDiv = document.getElementById("totalMes");
-  const totalVariavelDiv = document.getElementById("totalVariavel");
-  const totalFixaDiv = document.getElementById("totalFixa");
   const datalist = document.getElementById("listaCategorias");
 
   lista.innerHTML = "";
   totaisDiv.innerHTML = "";
   datalist.innerHTML = "";
 
-  let total = 0, totalVariavel = 0, totalFixa = 0;
+  let total = 0;
+  let totalVariavel = 0;
+  let totalFixa = 0;
   let categorias = {};
 
   listaFiltrada.forEach(item => {
@@ -264,38 +262,42 @@ function atualizarTela(listaFiltrada = dados) {
 
     lista.innerHTML += `
       <div class="card">
-        <strong>${item.categoria}</strong><br>
-        R$ ${valor.toFixed(2)}<br>
-        ${item.data}<br>
-        ${item.tipo}<br>
+        <strong>${item.categoria}</strong>
+        R$ ${valor.toFixed(2)}
+        ${item.data}
+        ${item.tipo}
         <button class="excluir" onclick="excluir('${item.id}')">Excluir</button>
       </div>
     `;
   });
 
-  [...new Set(dados.map(d => d.categoria))].forEach(cat => {
+  let categoriasUnicas = [...new Set(dados.map(d => d.categoria))];
+  categoriasUnicas.forEach(cat => {
     datalist.innerHTML += `<option value="${cat}">`;
   });
 
   for (let cat in categorias) {
     totaisDiv.innerHTML += `
       <div class="card">
-        <strong>${cat}</strong><br>
+        <strong>${cat}</strong>
         R$ ${categorias[cat].toFixed(2)}
       </div>
     `;
   }
 
-  totalMesDiv.innerText = "Total: R$ " + total.toFixed(2);
-  totalVariavelDiv.innerText = "Variável: R$ " + totalVariavel.toFixed(2);
-  totalFixaDiv.innerText = "Fixa: R$ " + totalFixa.toFixed(2);
+  document.getElementById("totalMes").innerText = "Total: R$ " + total.toFixed(2);
+  document.getElementById("totalVariavel").innerText = "Variável: R$ " + totalVariavel.toFixed(2);
+  document.getElementById("totalFixa").innerText = "Fixa: R$ " + totalFixa.toFixed(2);
 }
 
+// FILTRO
 function filtrarMes() {
   const mes = document.getElementById("filtroMes").value;
+
   if (!mes) return atualizarTela();
 
-  atualizarTela(dados.filter(d => d.data.startsWith(mes)));
+  const filtrado = dados.filter(d => d.data.startsWith(mes));
+  atualizarTela(filtrado);
 }
 
 carregar();
