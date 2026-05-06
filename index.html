@@ -101,7 +101,7 @@ button:hover {
   gap: 12px;
 }
 
-/* CARDS (MAIS COMPACTOS 🔥) */
+/* CARDS */
 .card {
   background: #0f172a;
   padding: 8px;
@@ -114,10 +114,19 @@ button:hover {
   gap: 4px;
 }
 
-/* botão dentro do card */
 .card button {
   align-self: flex-start;
   margin-top: 5px;
+}
+
+/* TITULO DATA */
+.data-titulo {
+  grid-column: 1 / -1;
+  margin-top: 15px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #334155;
+  font-weight: bold;
+  color: #93c5fd;
 }
 </style>
 </head>
@@ -236,7 +245,7 @@ async function excluir(id) {
   carregar();
 }
 
-// TELA
+// TELA (AGRUPADO POR DATA)
 function atualizarTela(listaFiltrada = dados) {
   const lista = document.getElementById("lista");
   const totaisDiv = document.getElementById("totais");
@@ -251,24 +260,43 @@ function atualizarTela(listaFiltrada = dados) {
   let totalFixa = 0;
   let categorias = {};
 
+  let agrupado = {};
+
   listaFiltrada.forEach(item => {
     const valor = Number(item.valor);
-    total += valor;
 
+    total += valor;
     if (item.tipo === "Variável") totalVariavel += valor;
     if (item.tipo === "Fixa") totalFixa += valor;
 
     categorias[item.categoria] = (categorias[item.categoria] || 0) + valor;
 
+    if (!agrupado[item.data]) agrupado[item.data] = [];
+    agrupado[item.data].push(item);
+  });
+
+  const datasOrdenadas = Object.keys(agrupado).sort((a, b) => b.localeCompare(a));
+
+  datasOrdenadas.forEach(data => {
+
     lista.innerHTML += `
-      <div class="card">
-        <strong>${item.categoria}</strong>
-        R$ ${valor.toFixed(2)}
-        ${item.data}
-        ${item.tipo}
-        <button class="excluir" onclick="excluir('${item.id}')">Excluir</button>
+      <div class="data-titulo">
+        📅 ${data.split("-").reverse().join("/")}
       </div>
     `;
+
+    agrupado[data].forEach(item => {
+      const valor = Number(item.valor);
+
+      lista.innerHTML += `
+        <div class="card">
+          <strong>${item.categoria}</strong>
+          R$ ${valor.toFixed(2)}
+          ${item.tipo}
+          <button class="excluir" onclick="excluir('${item.id}')">Excluir</button>
+        </div>
+      `;
+    });
   });
 
   let categoriasUnicas = [...new Set(dados.map(d => d.categoria))];
