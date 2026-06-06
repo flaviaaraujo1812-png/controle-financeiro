@@ -202,7 +202,7 @@ async function carregar() {
   }
 
   dados = data;
-  atualizarTela();
+  carregarMesAtual();
 }
 
 // SALVAR
@@ -317,17 +317,39 @@ function atualizarTela(listaFiltrada = dados) {
   document.getElementById("totalVariavel").innerText = "Variável: R$ " + totalVariavel.toFixed(2);
   document.getElementById("totalFixa").innerText = "Fixa: R$ " + totalFixa.toFixed(2);
 }
+  
+function carregarMesAtual() {
 
-// FILTRO
-function filtrarMes() {
-  const mes = document.getElementById("filtroMes").value;
+  const hoje = new Date();
 
-  if (!mes) return atualizarTela();
+  const mesAtual =
+    hoje.getFullYear() +
+    "-" +
+    String(hoje.getMonth() + 1).padStart(2, "0");
 
-  const filtrado = dados.filter(d => d.data.startsWith(mes));
+  document.getElementById("filtroMes").value = mesAtual;
+
+  const filtrado = dados.filter(item =>
+    item.data.startsWith(mesAtual)
+  );
+
   atualizarTela(filtrado);
 }
+function filtrarMes() {
 
+  const mes = document.getElementById("filtroMes").value;
+
+  if (!mes) {
+    carregarMesAtual();
+    return;
+  }
+
+  const filtrado = dados.filter(item =>
+    item.data.startsWith(mes)
+  );
+
+  atualizarTela(filtrado);
+}
 carregar();
 
 </script>
